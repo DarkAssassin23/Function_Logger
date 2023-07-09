@@ -17,15 +17,23 @@ void test_init(char **argv)
 
     // Will only output to stderr console.
     //init_logger(DEBUG, NULL, NULL, false, true);
+
+    // Will throw an error because the log level is too high
+    //init_logger(10, NULL, NULL, false, true);
+
+    // Will throw an error because the log level is too low
+    //init_logger(-3, NULL, NULL, false, false);
 }
 
-int main(int argc, char **argv) {
+int main(int argc, char **argv) 
+{
     test_init(argv);
 
     // This will fail since we already called init
     // init_logger(DEBUG, "logs/", argv, false, false);
     LOG("Log from LOG()");
     LOGL(INFO, "Log from LOGL() at level %d", INFO);
+    LOGL(10, "This will not work");
     LOGF("Log from LOGF()");
     LOGFL(DEBUG, "Log from LOGFL() at level %d", DEBUG);
     log_cleanup();

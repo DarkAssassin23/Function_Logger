@@ -3,6 +3,7 @@
 #include <stdarg.h>
 #include <string.h>
 #include <time.h>
+#include <assert.h>
 // Makeing sure log dir exists
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -36,8 +37,8 @@ const char* colors[] = {
 };
 
 /**
-* @brief Generates a timestamp in Y-m-d_HMS format
-* @return The timestamp formated as a string
+* @brief Generates a timestamp in Y-m-d_HMS format.
+* @return The timestamp formated as a string.
 */
 static char* generate_file_timestamp(void)
 {
@@ -54,8 +55,8 @@ static char* generate_file_timestamp(void)
 }
 
 /**
-* @brief Generates a timestamp in m/d/y:H:M:S format
-* @return The timestamp formated as a string
+* @brief Generates a timestamp in m/d/y:H:M:S format.
+* @return The timestamp formated as a string.
 */
 static char* generate_timestamp(void)
 {
@@ -72,10 +73,10 @@ static char* generate_timestamp(void)
 }
 
 /**
-* @brief Create a directory from a path 
-* @param[in] full_path The full path of the directory path
-* @param[in] end The ending index where the subdirectory we're trying to make is
-* @return If the directory creation was successful
+* @brief Create a directory from a path.
+* @param[in] full_path The full path of the directory path.
+* @param[in] end The ending index where the subdirectory we're trying to make is.
+* @return If the directory creation was successful.
 */
 static bool create_dir_from_path(const char *path, int end)
 {
@@ -100,9 +101,9 @@ static bool create_dir_from_path(const char *path, int end)
 }
 
 /**
-* @brief Makes a directory structure given a path
-* @param[in] path The full path to make the directory structure of
-* @return If the path was created successfully
+* @brief Makes a directory structure given a path.
+* @param[in] path The full path to make the directory structure of.
+* @return If the path was created successfully.
 */
 static bool make_dir_path(char* path)
 {
@@ -134,9 +135,9 @@ static bool make_dir_path(char* path)
 }
 
 /**
-* @brief Make sure the log directory exists
-* @param[in] log_dir Path to the log directory
-* @return If the log directory exists or was created successfully
+* @brief Make sure the log directory exists.
+* @param[in] log_dir Path to the log directory.
+* @return If the log directory exists or was created successfully.
 */
 static bool validate_log_dir(char *log_dir)
 {
@@ -152,7 +153,7 @@ static bool validate_log_dir(char *log_dir)
 
 /**
  * @brief Function to generate the name of the log file.
- * @param[in] log_dir The directory to save the log files too
+ * @param[in] log_dir The directory to save the log files too.
  * @param[in] prog_name The name of the program from argv[0].
  * @return The name of the log file to write to.
  */
@@ -220,16 +221,12 @@ static void get_datetime(FILE *fptr)
 }
 
 /**
- * @brief Function to get the filename and write to log file.
- * @param[in] fptr File pointer to the log file.
- * @param[in] path Full filepath of the file
- * @return None.
+ * @brief Function to extract the name of the file from the provided path.
+ * @param[in] path The path to, and including, the file.
+ * @return The filename.
  */
-static void get_filename(FILE *fptr, const char *path) 
+static char* remove_dir_from_filename(const char* path)
 {
-    if(path == NULL)
-        return;
-
     char *filename_start = strrchr(path, '/');
     int filename_start_index = 0;
 
@@ -241,7 +238,18 @@ static void get_filename(FILE *fptr, const char *path)
     char *filename = (char*)malloc(sizeof(char)*filename_len + 1);
     strncpy(filename, path+filename_start_index, sizeof(char)*filename_len);
     filename[filename_len] = '\0';
+    return filename;
+}
 
+/**
+ * @brief Function to get the filename and write to log file.
+ * @param[in] fptr File pointer to the log file.
+ * @param[in] path Full filepath of the file.
+ * @return None.
+ */
+static void get_filename(FILE *fptr, const char *path) 
+{
+    char *filename = remove_dir_from_filename(path);
     fprintf(fptr, "%s]: ", filename);
     free(filename);
 }
@@ -250,14 +258,11 @@ static void get_filename(FILE *fptr, const char *path)
  * @brief Function to get the name of the function calling
  *      the logger and write to log file.
  * @param[in] fptr File pointer to the log file.
- * @param[in] function_name Name of the function calling the logger
+ * @param[in] function_name Name of the function calling the logger.
  * @return None.
  */
 static void get_function_name(FILE *fptr, const char *function_name) 
 {
-    if(function_name == NULL)
-        return;
-
     fprintf(fptr, "[%s():", function_name);
 }
 
@@ -265,27 +270,24 @@ static void get_function_name(FILE *fptr, const char *function_name)
  * @brief Function to get the name of the function calling
  *      the logger and write to log file.
  * @param[in] fptr File pointer to the log file.
- * @param[in] line The line of the file where the logger was called
+ * @param[in] line The line of the file where the logger was called.
  * @return None.
  */
 static void get_line_num(FILE *fptr, size_t line) 
 {
-    if(line == 0)
-        return;
-
     fprintf(fptr, "%lu: ", line);
 }
 /**
  * @brief Function to write the log level to the log file.
  * @param[in] level Log level.
  * @param[in] fptr File pointer to the log file.
- * @return None
+ * @return None.
  */
 static void log_msg(LOGGING_LEVELS level, FILE *fptr) 
 {
     if(level == DEFAULT)
         return;
-        
+
     get_datetime(fptr);
     if(fptr == stderr) 
         fprintf(fptr, "%s%-10s%s", colors[level], log_level_strings[level], colors[RESET]);
@@ -293,10 +295,21 @@ static void log_msg(LOGGING_LEVELS level, FILE *fptr)
         fprintf(fptr, "%-10s", log_level_strings[level]);
 }
 
-void log_func(LOGGING_LEVELS level, const char *file, const size_t line, const char* function_name, const char *frmt, ...) 
+void log_func(LOGGING_LEVELS level, const char *file, const size_t line, 
+                const char* function_name, bool display_calling_info, const char *frmt, ...) 
 {
+
     if(LOG_LEVEL > level && level != DEFAULT)
         return;
+    
+    if(level > ERROR)
+    {
+        char *filename = remove_dir_from_filename(file);
+        fprintf(stderr, "%sError:%s Invalid logging level provided\nWhere: [%s():%s] Line: %zu\n", 
+            colors[ERROR], colors[RESET], function_name, filename, line);
+        free(filename);
+        return;
+    }
 
     FILE *fptr = stderr;
     if(write_to_file) 
@@ -313,9 +326,12 @@ void log_func(LOGGING_LEVELS level, const char *file, const size_t line, const c
 
     log_msg(level, fptr);
 
-    get_function_name(fptr, function_name);
-    get_filename(fptr, file);
-    get_line_num(fptr, line);
+    if(display_calling_info)
+    {
+        get_function_name(fptr, function_name);
+        get_filename(fptr, file);
+        get_line_num(fptr, line);
+    }
     
     char *format = strdup(frmt);
     strcat(format, "\n");
@@ -331,9 +347,12 @@ void log_func(LOGGING_LEVELS level, const char *file, const size_t line, const c
         {
             fptr = stderr;
             log_msg(level, fptr);
-            get_function_name(fptr, function_name);
-            get_filename(fptr, file);
-            get_line_num(fptr, line);
+            if(display_calling_info)
+            {
+                get_function_name(fptr, function_name);
+                get_filename(fptr, file);
+                get_line_num(fptr, line);
+            }
             va_list argp;
             va_start(argp, frmt);
             vfprintf(fptr, format, argp);
@@ -345,12 +364,13 @@ void log_func(LOGGING_LEVELS level, const char *file, const size_t line, const c
 
 void init_logger(LOGGING_LEVELS level, char* log_dir, char** argv, bool to_file, bool to_console) 
 {
-    if(LOG_LEVEL > OFF) 
+    if(LOG_LEVEL != OFF) 
     {
         fprintf(stderr, "%sError:%s Logger already initialised in the project\nExiting the program with status 1.\n", 
             colors[ERROR], colors[RESET]);
         exit(1);
     }
+    assert(level > OFF && level <= ERROR);
 
     LOG_LEVEL = level;
     write_to_file = to_file;
