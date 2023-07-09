@@ -5,11 +5,25 @@ LIBSDIR = libs
 OBJSDIR = obj
 LOGSDIR = logs
 
+ifeq ($(OS),Windows_NT)
+	SYSNAME = Windows
+else
+	UNAMEOS = $(shell uname -s)
+	ifeq ($(UNAMEOS),Darwin)
+		SYSNAME = macOS
+	endif
+	ifeq ($(UNAMEOS),Linux)
+		SYSNAME = Linux
+	endif
+endif
+
 ifeq ($(DEBUG), yes)
 	LIBDIR = libs/debug
 	STATIC_LIBNAME = libfunclogd.a
-	ifeq ($(OS),Windows_NT)
+	ifeq ($(SYSNAME),Windows)
 		SHARED_LIBNAME = libfunclogd.dll
+	else ifeq ($(SYSNAME),macOS)
+		SHARED_LIBNAME = libfunclogd.dylib
 	else	
 		SHARED_LIBNAME = libfunclogd.so
 	endif
@@ -22,6 +36,8 @@ else
 	STATIC_LIBNAME = libfunclog.a
 	ifeq ($(OS),Windows_NT)
 		SHARED_LIBNAME = libfunclog.dll
+	else ifeq ($(SYSNAME),macOS)
+		SHARED_LIBNAME = libfunclog.dylib
 	else	
 		SHARED_LIBNAME = libfunclog.so
 	endif
@@ -69,7 +85,11 @@ $(STATIC_LIB_TARGET): $(STATIC_LIBOBJS)
 
 $(SHARED_LIB_TARGET): $(SHARED_LIBOBJS)
 	@mkdir -p $(@D)
+ifeq ($(SYSNAME),macOS)
+	$(CC) -install_name "@rpath/$(SHARED_LIBNAME)" -dynamiclib $^ -o $@
+else
 	$(CC) -shared $^ -o $@
+endif
 
 $(OBJDIR)/%.o: %.c
 	@mkdir -p $(@D)
