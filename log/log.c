@@ -64,7 +64,7 @@ static char* generate_timestamp(void)
     struct tm *tm  = localtime(&t);
 
     char timestr[32];
-    size_t timestamp_len = strftime(timestr, sizeof(timestr), "[%D:%T]", tm) + 1;
+    size_t timestamp_len = strftime(timestr, sizeof(timestr), "[%D@%T]", tm) + 1;
     char *modified_date = (char*)malloc(sizeof(char)*timestamp_len + 1);
     strncpy(modified_date, timestr, timestamp_len);
     modified_date[timestamp_len] = '\0';
