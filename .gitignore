@@ -1,0 +1,7 @@
+.DS_Store
+._*
+obj/
+libs/
+logs/
+*.dll
+testlogger
