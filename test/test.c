@@ -6,8 +6,8 @@
 
 void test_init(char **argv) 
 {
-    // Will write to [name of the program].log in the 'logs/' directory
-    // as well as print the output to the screen
+    // Will write to [name of the program]_[timestamp].log in the 
+    // 'logs/' directory as well as print the output to the screen
     init_logger(INFO, "logs", argv, true, true); 
 
     // Will write to [name of the program]_[timestamp].log 
