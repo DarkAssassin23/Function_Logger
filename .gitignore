@@ -3,5 +3,6 @@
 obj/
 libs/
 logs/
+.vscode
 *.dll
 testlogger
