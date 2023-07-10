@@ -47,7 +47,7 @@ static char* generate_file_timestamp(void)
 
     char timestr[32];
     size_t timestamp_len = strftime(timestr, sizeof(timestr), "%Y-%m-%d_%H%M%S", tm);
-    char *modified_date = (char*)malloc(sizeof(char)*timestamp_len + 1);
+    char *modified_date = (char*)malloc(sizeof(char)*(timestamp_len + 1));
     strncpy(modified_date, timestr, timestamp_len);
     modified_date[timestamp_len] = '\0';
 
@@ -64,9 +64,9 @@ static char* generate_timestamp(void)
     struct tm *tm  = localtime(&t);
 
     char timestr[32];
-    size_t timestamp_len = strftime(timestr, sizeof(timestr), "[%D@%T]", tm) + 1;
-    char *modified_date = (char*)malloc(sizeof(char)*timestamp_len + 1);
-    strncpy(modified_date, timestr, timestamp_len);
+    size_t timestamp_len = strftime(timestr, sizeof(timestr), "%D@%T", tm);
+    char *modified_date = (char*)malloc(sizeof(char)*(timestamp_len + 1));
+    strncpy(modified_date, timestr, sizeof(char)*timestamp_len);
     modified_date[timestamp_len] = '\0';
 
     return modified_date;
@@ -85,7 +85,7 @@ static bool create_dir_from_path(const char *path, int end)
 
     bool success = false;
     size_t sub_dir_len = end;
-    char *sub_dir = (char*)malloc(sizeof(char)*sub_dir_len + 1);
+    char *sub_dir = (char*)malloc(sizeof(char)*(sub_dir_len + 1));
     strncpy(sub_dir, path, sizeof(char)*sub_dir_len);
     sub_dir[sub_dir_len] = '\0';
 
@@ -112,7 +112,7 @@ static bool make_dir_path(char* path)
     // Make sure log directory ends in a /
     if(path[strlen(path)-1] != '/')
     {
-        validated_log_dir = (char*)malloc(sizeof(char)*strlen(path)+2);
+        validated_log_dir = (char*)malloc(sizeof(char)*(strlen(path)+2));
         strncpy(validated_log_dir, path, sizeof(char)*strlen(path));
         validated_log_dir[strlen(path)] = '/';
         validated_log_dir[strlen(path)+1] = '\0';
@@ -172,7 +172,7 @@ static char* generate_log_filename(char *log_dir, const char* prog_name)
     // Make sure log directory ends in a /
     if(log_dir[strlen(log_dir)-1] != '/')
     {
-        validated_log_dir = (char*)malloc(sizeof(char)*strlen(log_dir)+2);
+        validated_log_dir = (char*)malloc(sizeof(char)*(strlen(log_dir)+2));
         strncpy(validated_log_dir, log_dir, sizeof(char)*strlen(log_dir));
         validated_log_dir[strlen(log_dir)] = '/';
         validated_log_dir[strlen(log_dir)+1] = '\0';
@@ -193,13 +193,14 @@ static char* generate_log_filename(char *log_dir, const char* prog_name)
     size_t timestamp_str_len = strlen(timestamp_str);
 
     size_t filename_len = log_dir_len + prog_name_len + timestamp_str_len;
-    // Adding 6 to add '_' between file and time stamp as well as '.log/0'
+    // Adding 6 to add '_' between file and time stamp as well as '.log\0'
     char *filename = (char*)malloc((sizeof(char)*filename_len)+6); 
     strncpy(filename, validated_log_dir, sizeof(char)*log_dir_len);
     strncpy(filename+log_dir_len, &prog_name[prog_name_start_index], (sizeof(char)*prog_name_len));
     filename[log_dir_len+prog_name_len] = '_';
     strncpy(filename+(log_dir_len+prog_name_len+1), timestamp_str, sizeof(char)*timestamp_str_len);
-    strncpy(filename+(filename_len+1), ".log\0", sizeof(char)*5); // strlen("".log/0") = 5
+    strncpy(filename+(filename_len+1), ".log", sizeof(char)*4); // strlen(".log) = 4 + '\0' = 5
+    filename[strlen(filename)] = '\0';
 
     if(free_memory)
         free(validated_log_dir);
@@ -216,7 +217,7 @@ static char* generate_log_filename(char *log_dir, const char* prog_name)
 static void get_datetime(FILE *fptr) 
 {
     char *modified_date = generate_timestamp();
-    fprintf(fptr, "%s ", modified_date); 
+    fprintf(fptr, "[%s]", modified_date); 
     free(modified_date);
 }
 
@@ -235,7 +236,7 @@ static char* remove_dir_from_filename(const char* path)
 
     size_t filename_len = strlen(path)-filename_start_index;
 
-    char *filename = (char*)malloc(sizeof(char)*filename_len + 1);
+    char *filename = (char*)malloc(sizeof(char)*(filename_len + 1));
     strncpy(filename, path+filename_start_index, sizeof(char)*filename_len);
     filename[filename_len] = '\0';
     return filename;
@@ -250,7 +251,7 @@ static char* remove_dir_from_filename(const char* path)
 static void get_filename(FILE *fptr, const char *path) 
 {
     char *filename = remove_dir_from_filename(path);
-    fprintf(fptr, "%s]: ", filename);
+    fprintf(fptr, "%s:", filename);
     free(filename);
 }
 
@@ -275,7 +276,7 @@ static void get_function_name(FILE *fptr, const char *function_name)
  */
 static void get_line_num(FILE *fptr, size_t line) 
 {
-    fprintf(fptr, "%lu: ", line);
+    fprintf(fptr, "%zu] ", line);
 }
 /**
  * @brief Function to write the log level to the log file.
@@ -290,9 +291,9 @@ static void log_msg(LOGGING_LEVELS level, FILE *fptr)
 
     get_datetime(fptr);
     if(fptr == stderr) 
-        fprintf(fptr, "%s%-10s%s", colors[level], log_level_strings[level], colors[RESET]);
+        fprintf(fptr, "%s%-9s%s", colors[level], log_level_strings[level], colors[RESET]);
     else 
-        fprintf(fptr, "%-10s", log_level_strings[level]);
+        fprintf(fptr, "%-9s", log_level_strings[level]);
 }
 
 void log_func(LOGGING_LEVELS level, const char *file, const size_t line, 
@@ -339,7 +340,7 @@ void log_func(LOGGING_LEVELS level, const char *file, const size_t line,
     va_start(argp, frmt);
     vfprintf(fptr, format, argp);
     va_end(argp);
-
+    free(format);
     if(fptr != stderr) 
     {
         fclose(fptr);
@@ -353,13 +354,15 @@ void log_func(LOGGING_LEVELS level, const char *file, const size_t line,
                 get_filename(fptr, file);
                 get_line_num(fptr, line);
             }
+            char *format = strdup(frmt);
+            strcat(format, "\n");
             va_list argp;
             va_start(argp, frmt);
             vfprintf(fptr, format, argp);
             va_end(argp);
+            free(format);
         }
     }
-    free(format);
 }
 
 void init_logger(LOGGING_LEVELS level, char* log_dir, char** argv, bool to_file, bool to_console) 

@@ -8,7 +8,7 @@ void test_init(char **argv)
 {
     // Will write to [name of the program]_[timestamp].log in the 
     // 'logs/' directory as well as print the output to the screen
-    init_logger(INFO, "logs", argv, true, true); 
+    init_logger(DEBUG, "logs", argv, true, true); 
 
     // Will write to [name of the program]_[timestamp].log 
     // in the 'custom_dir/logs/' directory
@@ -36,6 +36,7 @@ int main(int argc, char **argv)
     LOGL(10, "This will not work");
     LOGF("Log from LOGF()");
     LOGFL(DEBUG, "Log from LOGFL() at level %d", DEBUG);
+    LOGFL(WARNING, "Log from LOGFL() at level %d", WARNING);
     log_cleanup();
     return 0;
 }
