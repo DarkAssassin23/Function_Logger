@@ -289,7 +289,6 @@ static void log_msg(LOGGING_LEVELS level, FILE *fptr)
     if(level == DEFAULT)
         return;
 
-    get_datetime(fptr);
     if(fptr == stderr) 
         fprintf(fptr, "%s%-9s%s", colors[level], log_level_strings[level], colors[RESET]);
     else 
@@ -325,6 +324,9 @@ void log_func(LOGGING_LEVELS level, const char *file, const size_t line,
         }
     }
 
+    if(display_calling_info)
+        get_datetime(fptr);
+
     log_msg(level, fptr);
 
     if(display_calling_info)
@@ -347,6 +349,8 @@ void log_func(LOGGING_LEVELS level, const char *file, const size_t line,
         if(write_to_console)
         {
             fptr = stderr;
+            if(display_calling_info)
+                get_datetime(fptr);
             log_msg(level, fptr);
             if(display_calling_info)
             {
