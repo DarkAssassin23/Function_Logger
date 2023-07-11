@@ -296,7 +296,8 @@ static void log_msg(LOGGING_LEVELS level, FILE *fptr)
 }
 
 void log_func(LOGGING_LEVELS level, const char *file, const size_t line, 
-                const char* function_name, bool display_calling_info, const char *frmt, ...) 
+                const char* function_name, bool display_calling_info, bool newline, 
+                const char *frmt, ...) 
 {
 
     if(LOG_LEVEL > level && level != DEFAULT)
@@ -337,7 +338,8 @@ void log_func(LOGGING_LEVELS level, const char *file, const size_t line,
     }
     
     char *format = strdup(frmt);
-    strcat(format, "\n");
+    if(newline)
+        strcat(format, "\n");
     va_list argp;
     va_start(argp, frmt);
     vfprintf(fptr, format, argp);
@@ -359,7 +361,8 @@ void log_func(LOGGING_LEVELS level, const char *file, const size_t line,
                 get_line_num(fptr, line);
             }
             char *format = strdup(frmt);
-            strcat(format, "\n");
+            if(newline)
+                strcat(format, "\n");
             va_list argp;
             va_start(argp, frmt);
             vfprintf(fptr, format, argp);

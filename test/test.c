@@ -31,12 +31,20 @@ int main(int argc, char **argv)
 
     // This will fail since we already called init
     // init_logger(DEBUG, "logs/", argv, false, false);
-    LOG("Log from LOG()");
-    LOGL(INFO, "Log from LOGL() at level %d", INFO);
+    LOG("Log from LOG()\n");
+    NLOG("This will auto print a newline");
+    LOGL(INFO, "Log from LOGL() at level %d\n", INFO);
     LOGL(10, "This will not work");
-    LOGF("Log from LOGF()");
-    LOGFL(DEBUG, "Log from LOGFL() at level %d", DEBUG);
-    LOGFL(WARNING, "Log from LOGFL() at level %d", WARNING);
+    LOGF("Log from LOGF()\n");
+    LOGFL(DEBUG, "Log from LOGFL() at level %d\n", DEBUG);
+    LOGFL(WARNING, "Log from LOGFL() at level %d\n", WARNING);
+    NLOGL(ERROR, "This has an extra newline since NLOGL was called\n");
+    NLOGF("The number of arguments passed in was %d", argc);
+
+    LOGFL(DEBUG, "Arguments passed in: ");
+    for(int x=0; x < argc; x++)
+        LOG("%s%s", argv[x], ((x+1)!=argc) ? ", " : "\n");
+
     log_cleanup();
     return 0;
 }
