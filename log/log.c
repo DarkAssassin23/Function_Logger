@@ -290,9 +290,9 @@ static void log_msg(LOGGING_LEVELS level, FILE *fptr)
         return;
 
     if(fptr == stderr) 
-        fprintf(fptr, "%s%-9s%s", colors[level], log_level_strings[level], colors[RESET]);
+        fprintf(fptr, "%s%-10s%s", colors[level], log_level_strings[level], colors[RESET]);
     else 
-        fprintf(fptr, "%-9s", log_level_strings[level]);
+        fprintf(fptr, "%-10s", log_level_strings[level]);
 }
 
 void log_func(LOGGING_LEVELS level, const char *file, const size_t line, 
@@ -328,14 +328,13 @@ void log_func(LOGGING_LEVELS level, const char *file, const size_t line,
     if(display_calling_info)
         get_datetime(fptr);
 
-    log_msg(level, fptr);
-
     if(display_calling_info)
     {
         get_function_name(fptr, function_name);
         get_filename(fptr, file);
         get_line_num(fptr, line);
     }
+    log_msg(level, fptr);
     
     char *format = strdup(frmt);
     if(newline)
@@ -353,13 +352,15 @@ void log_func(LOGGING_LEVELS level, const char *file, const size_t line,
             fptr = stderr;
             if(display_calling_info)
                 get_datetime(fptr);
-            log_msg(level, fptr);
+            
             if(display_calling_info)
             {
                 get_function_name(fptr, function_name);
                 get_filename(fptr, file);
                 get_line_num(fptr, line);
             }
+
+            log_msg(level, fptr);
             char *format = strdup(frmt);
             if(newline)
                 strcat(format, "\n");
