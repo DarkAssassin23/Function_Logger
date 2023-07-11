@@ -9,10 +9,13 @@
 #include <sys/types.h>
 #include <unistd.h>
 
+#define DEFAULT_FILENAME "log"
+#define DEFAULT_LOG_DIR "logs/"
+
 //Global variables to keep track of log files.
 static int LOG_LEVEL = OFF;
-static char* log_filename = "log";
-static char* log_dir_name = "logs/";
+static char* log_filename = DEFAULT_FILENAME;
+static char* log_dir_name = DEFAULT_LOG_DIR;
 static bool write_to_file = false;
 static bool write_to_console = true;
 static bool free_log_filename = false;
@@ -405,4 +408,10 @@ void log_cleanup()
         free(log_filename);
     if(free_log_dir_name)
         free(log_dir_name);
+
+    free_log_filename = false;
+    free_log_dir_name = false;
+    LOG_LEVEL = OFF;
+    log_filename = DEFAULT_FILENAME;
+    log_dir_name = DEFAULT_LOG_DIR;
 }
