@@ -97,14 +97,22 @@ where you added `log.h`, you would need `-I headers/` in your makefile.
 ### Using in your program
 The library includes four functions to allow you to log your information.
 All of which function just like `printf()` in terms of syntax.
-The only difference is in the `LOGF()` and `LOGFL()` functions, 
-which require you to add the level of logging you would like.
+The only difference is in the `LOGF()/NLOGF()` and 
+`LOGFL()/NLOGFL()` functions,  which require you to add the level 
+of logging you would like.
 
 ```c
+// Don't auto print a new line at the end
 #define LOG(...)
 #define LOGL(level, ...)
 #define LOGF(...)
 #define LOGFL(level, ...)
+
+// Do auto print a new line at the end
+#define NLOG(...)
+#define NLOGL(level, ...)
+#define NLOGF(...)
+#define NLOGFL(level, ...)
 ```
 
 While not required, it is best practice to initialize the logger at the
@@ -122,13 +130,13 @@ int main(int argc, char **argv)
 {
     if(argc != 2)
     {
-        LOGFL(ERROR, "%s takes one argument", argv[0]);
-        LOG("Usage: %s [name]");
+        LOGFL(ERROR, "%s takes one argument\n", argv[0]);
+        LOG("Usage: %s [name]\n");
         return -1;
     }
 
     init_logger(INFO, "logs", argv, true, true);
-    LOG("Hello %s!", argv[1]);
+    NLOG("Hello %s!", argv[1]);
     log_cleanup();
     
     return 0;
@@ -153,8 +161,8 @@ gcc example.c -o example -L ./ -lfunclog
 Below is some example output from the logger:
 ```
 Log from LOG()
-[INFO]   Log from LOGL() at level 3
-[07/09/23@21:47:25][main():test.c:37] Log from LOGF()
-[07/09/23@21:47:25][DEBUG]  [main():test.c:38] Log from LOGFL() at level 2
-[07/09/23@21:47:25][WARNING][main():test.c:39] Log from LOGFL() at level 4
+[INFO]    Log from LOGL() at level 3
+[07/10/23@21:25:05][main():test.c:38] Log from LOGF()
+[07/10/23@21:25:05][main():test.c:39] [DEBUG]   Log from LOGFL() at level 2
+[07/10/23@21:25:05][main():test.c:40] [WARNING] Log from LOGFL() at level 4
 ```
