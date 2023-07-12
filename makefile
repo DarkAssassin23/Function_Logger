@@ -5,6 +5,15 @@ LIBSDIR = libs
 OBJSDIR = obj
 LOGSDIR = logs
 
+MAJOR_VERSION = $(shell grep -Eo '.*MAJOR_VERSION  *[0-9]+' \
+	version/version.h | grep -o '[0-9]*')
+MINOR_VERSION = $(shell grep -Eo '.*MINOR_VERSION  *[0-9]+' \
+	version/version.h | grep -o '[0-9]*')
+PATCH_VERSION = $(shell grep -Eo '.*PATCH_VERSION  *[0-9]+' \
+	version/version.h | grep -o '[0-9]*')
+BUILD_VERSION = $(shell grep -Eo '.*BUILD_VERSION  *[0-9]+' \
+	version/version.h | grep -o '[0-9]*')
+
 ifeq ($(OS),Windows_NT)
 	SYSNAME = Windows
 else
@@ -17,23 +26,24 @@ else
 	endif
 endif
 
-BASE_LIB_NAME = libfunclog
 ifeq ($(DEBUG), yes)
+	BASE_LIB_NAME = libfunclogd
 	RCSDEBUG = -DDEBUG
 	LIBDIR = libs/debug
-	STATIC_LIBNAME = $(BASE_LIB_NAME)d.a
+	STATIC_LIBNAME = $(BASE_LIB_NAME).a
 	ifeq ($(SYSNAME),Windows)
-		SHARED_LIBNAME = $(BASE_LIB_NAME)d.dll
+		SHARED_LIBNAME = $(BASE_LIB_NAME).dll
 	else ifeq ($(SYSNAME),macOS)
-		SHARED_LIBNAME = $(BASE_LIB_NAME)d.dylib
+		SHARED_LIBNAME = $(BASE_LIB_NAME).dylib
 	else	
-		SHARED_LIBNAME = $(BASE_LIB_NAME)d.so
+		SHARED_LIBNAME = $(BASE_LIB_NAME).so
 	endif
 	LIBPOSTFIX = d
 	CFLAGS = -g -Wall
 
 	OBJDIR = obj/debug
 else
+	BASE_LIB_NAME = libfunclog
 	LIBDIR = libs/release
 	STATIC_LIBNAME = $(BASE_LIB_NAME).a
 	ifeq ($(OS),Windows_NT)
@@ -58,9 +68,12 @@ ifeq ($(SYSNAME),Windows)
 	SHARED_LIB_FLAGS = -shared
 else ifeq ($(SYSNAME),macOS)
 	SHARED_LIB_FLAGS =  -install_name "@rpath/$(SHARED_LIBNAME)" \
-		-dynamiclib -current_version 1.0 -compatibility_version 1.0 
+		-dynamiclib -current_version \
+		$(MAJOR_VERSION).$(MINOR_VERSION).$(PATCH_VERSION) \
+		 -compatibility_version \
+		 $(MAJOR_VERSION).$(MINOR_VERSION).$(PATCH_VERSION)
 else
-	LINUX_SONAME = $(BASE_LIB_NAME).1.so
+	LINUX_SONAME = $(BASE_LIB_NAME).$(MAJOR_VERSION).$(MINOR_VERSION).$(PATCH_VERSION).so
 	SHARED_LIB_FLAGS = -shared -Wl,-soname,$(LINUX_SONAME)
 endif
 
@@ -103,11 +116,6 @@ $(SHARED_LIB_TARGET): $(SHARED_LIBOBJS) $(RES)
 ifeq ($(SYSNAME),Linux)
 	@cd $(LIBDIR)/shared/ && ln -s $(SHARED_LIBNAME) $(LINUX_SONAME)
 endif
-# ifeq ($(SYSNAME),macOS)
-# 	$(CC) -install_name "@rpath/$(SHARED_LIBNAME)" -dynamiclib $^ -o $@
-# else
-# 	$(CC) -shared $^ -o $@
-# endif
 
 $(OBJDIR)/%.res: %.rc
 ifeq ($(SYSNAME),Windows)
