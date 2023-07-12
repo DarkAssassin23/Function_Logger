@@ -42,7 +42,9 @@ void log_func(LOGGING_LEVELS level, const char *filename,
                 bool display_calling_info, bool newline, const char *frmt, ...);
 
 /**
-* @brief Clean up the logger upon exit by freeing any necessary memory.
+* @brief Clean up the logger upon exit.
+* @details Cleans up the logger by freeing any necessary memory
+*       and resetting values back to their defaults
 * @return None.
 */
 void log_cleanup(void);
