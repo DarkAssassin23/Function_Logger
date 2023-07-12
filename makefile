@@ -33,10 +33,13 @@ ifeq ($(DEBUG), yes)
 	STATIC_LIBNAME = $(BASE_LIB_NAME).a
 	ifeq ($(SYSNAME),Windows)
 		SHARED_LIBNAME = $(BASE_LIB_NAME).dll
+		SHARED_LIB_VER_NAME = $(SHARED_LIBNAME)
 	else ifeq ($(SYSNAME),macOS)
 		SHARED_LIBNAME = $(BASE_LIB_NAME).dylib
+		SHARED_LIB_VER_NAME = $(BASE_LIB_NAME).$(MAJOR_VERSION).$(MINOR_VERSION).$(PATCH_VERSION).dylib
 	else	
 		SHARED_LIBNAME = $(BASE_LIB_NAME).so
+		SHARED_LIB_VER_NAME = $(BASE_LIB_NAME).so.$(MAJOR_VERSION).$(MINOR_VERSION).$(PATCH_VERSION)
 	endif
 	LIBPOSTFIX = d
 	CFLAGS = -g -Wall
@@ -48,17 +51,20 @@ else
 	STATIC_LIBNAME = $(BASE_LIB_NAME).a
 	ifeq ($(OS),Windows_NT)
 		SHARED_LIBNAME = $(BASE_LIB_NAME).dll
+		SHARED_LIB_VER_NAME = $(SHARED_LIBNAME)
 	else ifeq ($(SYSNAME),macOS)
 		SHARED_LIBNAME = $(BASE_LIB_NAME).dylib
+		SHARED_LIB_VER_NAME = $(BASE_LIB_NAME).$(MAJOR_VERSION).$(MINOR_VERSION).$(PATCH_VERSION).dylib
 	else	
 		SHARED_LIBNAME = $(BASE_LIB_NAME).so
+		SHARED_LIB_VER_NAME = $(BASE_LIB_NAME).so.$(MAJOR_VERSION).$(MINOR_VERSION).$(PATCH_VERSION)
 	endif
 	OBJDIR = obj/release
 	CFLAGS = -Os
 endif
 
 STATIC_LIB_TARGET = $(LIBDIR)/static/$(STATIC_LIBNAME)
-SHARED_LIB_TARGET = $(LIBDIR)/shared/$(SHARED_LIBNAME)
+SHARED_LIB_TARGET = $(LIBDIR)/shared/$(SHARED_LIB_VER_NAME)
 STATIC_OBJDIR = $(OBJDIR)/log/static
 SHARED_OBJDIR = $(OBJDIR)/log/shared
 
@@ -67,14 +73,13 @@ ifeq ($(SYSNAME),Windows)
 	RES = $(patsubst %.rc, $(OBJDIR)/%.res, $(RCS))
 	SHARED_LIB_FLAGS = -shared
 else ifeq ($(SYSNAME),macOS)
-	SHARED_LIB_FLAGS =  -install_name "@rpath/$(SHARED_LIBNAME)" \
+	SHARED_LIB_FLAGS =  -install_name "@rpath/$(SHARED_LIB_VER_NAME)" \
 		-dynamiclib -current_version \
 		$(MAJOR_VERSION).$(MINOR_VERSION).$(PATCH_VERSION) \
 		 -compatibility_version \
 		 $(MAJOR_VERSION).$(MINOR_VERSION).$(PATCH_VERSION)
 else
-	LINUX_SONAME = $(BASE_LIB_NAME).$(MAJOR_VERSION).$(MINOR_VERSION).$(PATCH_VERSION).so
-	SHARED_LIB_FLAGS = -shared -Wl,-soname,$(LINUX_SONAME)
+	SHARED_LIB_FLAGS = -shared -Wl,-soname,$(SHARED_LIB_VER_NAME)
 endif
 
 default: all
@@ -89,7 +94,7 @@ test-shared: LIBS = -L $(LIBDIR)/shared -lfunclog$(LIBPOSTFIX)
 test-shared: sharedlib $(TARGET)
 test-shared:
 ifeq ($(OS),Windows_NT)
-	@mv $(SHARED_LIB_TARGET) ./$(SHARED_LIBNAME)
+	@cp $(SHARED_LIB_TARGET) ./$(SHARED_LIBNAME)
 endif
 
 staticlib: $(STATIC_LIB_TARGET)
@@ -113,8 +118,9 @@ $(STATIC_LIB_TARGET): $(STATIC_LIBOBJS)
 $(SHARED_LIB_TARGET): $(SHARED_LIBOBJS) $(RES)
 	@mkdir -p $(@D)
 	$(CC) $(SHARED_LIB_FLAGS) $(RES) $(SHARED_LIBOBJS) -o $@
-ifeq ($(SYSNAME),Linux)
-	@cd $(LIBDIR)/shared/ && ln -s $(SHARED_LIBNAME) $(LINUX_SONAME)
+ifneq ($(SYSNAME),Windows)
+	@cd $(LIBDIR)/shared/ && rm -rf $(SHARED_LIBNAME) && \
+	ln -s $(SHARED_LIB_VER_NAME) $(SHARED_LIBNAME)
 endif
 
 $(OBJDIR)/%.res: %.rc
