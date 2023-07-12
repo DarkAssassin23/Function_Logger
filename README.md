@@ -4,6 +4,7 @@
  * [About](#about) 
  * [Building from source](#building-from-source)
  * [Linking](#linking)
+   * [Common issues](#common-issues)
  * [Usage](#usage)
 
 ----------
@@ -62,7 +63,7 @@ LIBS = -L 'libs/release/shared -lfunclog'
 ```
 ### Linking against the shared library
 When linking with the shared library on macOS and GNU/Linux, 
-it is best to also set an `rpath` to point to the location of the 
+you need to add an `rpath` to point to the location of the 
 shared library by adding an `LDFLAG`. Again, here is the example
 from the provided test program:
 ```bash
@@ -70,6 +71,48 @@ LDFLAGS = -Wl,-rpath 'libs/release/shared'
 ```
 Doing this will ensure your program can actually find the library 
 when you try to run it.
+
+### Common issues
+Linking with the static library is fairly straight forward. 
+However, linking with the shared library can pose issues. 
+
+#### -lfunclog not found
+If you run into an error message saying:
+```
+ld: library not found for -lfunclog
+# OR
+/usr/bin/ld: cannot find -lfunclog: No such file or directory
+```
+
+The reason this is happening is due to the linker being unable to
+find the `libfunclog.so` or `libfunclog.dylib` file respectively. 
+Most likely, the cause is you only have the `libfunclog.so.x.x.x` or 
+`libfunclog.x.x.x.dylb` in the folder you specified with your `-L`
+flag. To fix this create a symbolic link as seen below:
+```bash
+# GNU/Linux
+ln -s libfunclog.so.x.x.x libfunclog.so
+
+# macOS
+ln -s libfunclog.x.x.x.dylb libfunclog.dylb
+```
+Alternatively, rather than passing `-L /path/to/lib -lfunclog` you
+could just give the path to the shared library as seen below:
+```bash
+# Errors saying it can't find -lfunclog
+gcc example.c -o example -lfunclog -L libs -Wl,-rpath 'libs'
+
+# No errors
+gcc example.c -o example libs/libfunclog.so.1.0.0 -Wl,-rpath 'libs'
+```
+
+#### Code compiles, but unable to find the shared library
+Similar to the error above, if you code compiles but you get a message
+saying something to the effect of it can't find `libfunclog.so.x.x.x`
+or `libfunclog.x.x.x.dylb`, this is due to you not having said file in
+your `rpath`. To fix this, make sure the directory you are specifying 
+as your `rpath` contains `libfunclog.so.x.x.x` or `libfunclog.x.x.x.dylb`
+depending on your platform.
 
 On Windows, make sure the `dll` is in the same directory as your 
 executable.
