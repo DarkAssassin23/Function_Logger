@@ -17,15 +17,16 @@ else
 	endif
 endif
 
+BASE_LIB_NAME = libfunclog
 ifeq ($(DEBUG), yes)
 	LIBDIR = libs/debug
-	STATIC_LIBNAME = libfunclogd.a
+	STATIC_LIBNAME = $(BASE_LIB_NAME)d.a
 	ifeq ($(SYSNAME),Windows)
-		SHARED_LIBNAME = libfunclogd.dll
+		SHARED_LIBNAME = $(BASE_LIB_NAME)d.dll
 	else ifeq ($(SYSNAME),macOS)
-		SHARED_LIBNAME = libfunclogd.dylib
+		SHARED_LIBNAME = $(BASE_LIB_NAME)d.dylib
 	else	
-		SHARED_LIBNAME = libfunclogd.so
+		SHARED_LIBNAME = $(BASE_LIB_NAME)d.so
 	endif
 	LIBPOSTFIX = d
 	CFLAGS = -g -Wall
@@ -33,13 +34,13 @@ ifeq ($(DEBUG), yes)
 	OBJDIR = obj/debug
 else
 	LIBDIR = libs/release
-	STATIC_LIBNAME = libfunclog.a
+	STATIC_LIBNAME = $(BASE_LIB_NAME).a
 	ifeq ($(OS),Windows_NT)
-		SHARED_LIBNAME = libfunclog.dll
+		SHARED_LIBNAME = $(BASE_LIB_NAME).dll
 	else ifeq ($(SYSNAME),macOS)
-		SHARED_LIBNAME = libfunclog.dylib
+		SHARED_LIBNAME = $(BASE_LIB_NAME).dylib
 	else	
-		SHARED_LIBNAME = libfunclog.so
+		SHARED_LIBNAME = $(BASE_LIB_NAME).so
 	endif
 	OBJDIR = obj/release
 	CFLAGS = -Os
@@ -49,6 +50,18 @@ STATIC_LIB_TARGET = $(LIBDIR)/static/$(STATIC_LIBNAME)
 SHARED_LIB_TARGET = $(LIBDIR)/shared/$(SHARED_LIBNAME)
 STATIC_OBJDIR = $(OBJDIR)/log/static
 SHARED_OBJDIR = $(OBJDIR)/log/shared
+
+ifeq ($(SYSNAME),Windows)
+	RCS = $(wildcard version/*.rc)
+	RES = $(patsubst %.rc, $(OBJDIR)/%.res, $(RCS))
+	SHARED_LIB_FLAGS = -shared
+else ifeq ($(SYSNAME),macOS)
+	SHARED_LIB_FLAGS =  -install_name "@rpath/$(SHARED_LIBNAME)" \
+		-dynamiclib -current_version 1.0 -compatibility_version 1.0 
+else
+	LINUX_SONAME = $(BASE_LIB_NAME).1.so
+	SHARED_LIB_FLAGS = -shared -Wl,-soname,$(LINUX_SONAME)
+endif
 
 default: all
 
@@ -83,12 +96,22 @@ $(STATIC_LIB_TARGET): $(STATIC_LIBOBJS)
 	@mkdir -p $(@D)
 	ar rcs $@ $^
 
-$(SHARED_LIB_TARGET): $(SHARED_LIBOBJS)
+$(SHARED_LIB_TARGET): $(SHARED_LIBOBJS) $(RES)
 	@mkdir -p $(@D)
-ifeq ($(SYSNAME),macOS)
-	$(CC) -install_name "@rpath/$(SHARED_LIBNAME)" -dynamiclib $^ -o $@
-else
-	$(CC) -shared $^ -o $@
+	$(CC) $(SHARED_LIB_FLAGS) $(RES) $(SHARED_LIBOBJS) -o $@
+ifeq ($(SYSNAME),Linux)
+	@cd $(LIBDIR)/shared/ && ln -s $(SHARED_LIBNAME) $(LINUX_SONAME)
+endif
+# ifeq ($(SYSNAME),macOS)
+# 	$(CC) -install_name "@rpath/$(SHARED_LIBNAME)" -dynamiclib $^ -o $@
+# else
+# 	$(CC) -shared $^ -o $@
+# endif
+
+$(OBJDIR)/%.res: %.rc
+ifeq ($(SYSNAME),Windows)
+	@mkdir -p $(@D)
+	windres $< -O coff -o $@
 endif
 
 $(OBJDIR)/%.o: %.c
