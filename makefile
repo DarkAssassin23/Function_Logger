@@ -19,6 +19,7 @@ endif
 
 BASE_LIB_NAME = libfunclog
 ifeq ($(DEBUG), yes)
+	RCSDEBUG = -DDEBUG
 	LIBDIR = libs/debug
 	STATIC_LIBNAME = $(BASE_LIB_NAME)d.a
 	ifeq ($(SYSNAME),Windows)
@@ -111,7 +112,7 @@ endif
 $(OBJDIR)/%.res: %.rc
 ifeq ($(SYSNAME),Windows)
 	@mkdir -p $(@D)
-	windres $< -O coff -o $@
+	windres $(RCSDEBUG) $< -O coff -o $@
 endif
 
 $(OBJDIR)/%.o: %.c

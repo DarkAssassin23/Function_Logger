@@ -1,6 +1,8 @@
+#include "version.h"
+
 1 VERSIONINFO
-FILEVERSION     1,0,0,0
-PRODUCTVERSION  1,0,0,0
+FILEVERSION     MAJOR_VERSION, MINOR_VERSION, PATCH_VERSION, BUILD_VERSION
+PRODUCTVERSION  MAJOR_VERSION, MINOR_VERSION, PATCH_VERSION, BUILD_VERSION
 BEGIN
   BLOCK "StringFileInfo"
   BEGIN
@@ -8,12 +10,12 @@ BEGIN
     BEGIN
       VALUE "CompanyName", "Dark Assassins Inc."
       VALUE "FileDescription", "Function Logger"
-      VALUE "FileVersion", "1.0"
+      VALUE "FileVersion", LIB_VERSION_STRING 
       VALUE "InternalName", "FuncLog"
-      VALUE "LegalCopyright", "Dark Assassins Inc. 2023"
-      VALUE "OriginalFilename", "libfunclog.dll"
+      VALUE "LegalCopyright", COPYRIGHT_STRING "\0"
+      VALUE "OriginalFilename", WIN_FILENAME
       VALUE "ProductName", "Function Logger"
-      VALUE "ProductVersion", "1.0"
+      VALUE "ProductVersion", LIB_VERSION_STRING
     END
   END
   BLOCK "VarFileInfo"
