@@ -202,7 +202,7 @@ static char* generate_log_filename(char *log_dir, const char* prog_name)
     strncpy(filename+log_dir_len, &prog_name[prog_name_start_index], (sizeof(char)*prog_name_len));
     filename[log_dir_len+prog_name_len] = '_';
     strncpy(filename+(log_dir_len+prog_name_len+1), timestamp_str, sizeof(char)*timestamp_str_len);
-    strncpy(filename+(filename_len+1), ".log", sizeof(char)*4); // strlen(".log) = 4 + '\0' = 5
+    strncpy(filename+(filename_len+1), ".log", sizeof(char)*5); // strlen(".log) = 4 + '\0' = 5
     filename[strlen(filename)] = '\0';
 
     if(free_memory)
