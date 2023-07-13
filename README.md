@@ -48,11 +48,12 @@ make DEBUG=yes
 # debug mode, using the debug library
 make test-static DEBUG=yes
 ```
-> **Disclaimer:** For Windows users, this library has been built and 
-tested using the <a href="https://www.msys2.org" target="new">MSYS2</a> 
-suite of build tools, not Visual Studio. If you intend on using or 
-building the library with Visual Studio, your mileage may vary as to 
-whether it will actually work or not.
+> **Note**:
+> For Windows users, this library has been built and
+> tested using the <a href="https://www.msys2.org" target="new">MSYS2</a>
+> suite of build tools, not Visual Studio. If you intend on using or
+> building the library with Visual Studio, your mileage may vary as to
+> whether it will actually work or not.
 
 ----------
 ## Linking
