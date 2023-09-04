@@ -132,13 +132,7 @@ above), including, and calling the functions.
 ### Including
 First, ensure you are including the header file `log.h` in your program.
 ```c
-// include in c
 #include "log.h"
-
-// include in c++
-extern "C"{
-    #include "log.h" 
-}
 ```
 You also need to ensure the directory where you put the `log.h` file is 
 included in your project. For example, if you have a `headers/` folder 
