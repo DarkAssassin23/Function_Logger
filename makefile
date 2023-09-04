@@ -72,14 +72,17 @@ ifeq ($(SYSNAME),Windows)
 	RCS = $(wildcard version/*.rc)
 	RES = $(patsubst %.rc, $(OBJDIR)/%.res, $(RCS))
 	SHARED_LIB_FLAGS = -shared
+	RELEASE_BUNDLE_FOLDER=Function_Logger_Windows_x64
 else ifeq ($(SYSNAME),macOS)
 	SHARED_LIB_FLAGS =  -install_name "@rpath/$(SHARED_LIB_VER_NAME)" \
 		-dynamiclib -current_version \
 		$(MAJOR_VERSION).$(MINOR_VERSION).$(PATCH_VERSION) \
 		 -compatibility_version \
 		 $(MAJOR_VERSION).$(MINOR_VERSION).$(PATCH_VERSION)
+	RELEASE_BUNDLE_FOLDER=Function_Logger_macOS_x64
 else
 	SHARED_LIB_FLAGS = -shared -Wl,-soname,$(SHARED_LIB_VER_NAME)
+	RELEASE_BUNDLE_FOLDER=Function_Logger_Linux_x64
 endif
 
 default: all
@@ -141,6 +144,20 @@ $(SHARED_OBJDIR)/%.o: log/%.c
 	@mkdir -p $(@D)
 	$(CC) $(CFLAGS) -c $< -o $@
 
+release-bundle:
+	@$(MAKE) clean && $(MAKE) && $(MAKE) DEBUG=yes
+	@mkdir -p $(RELEASE_BUNDLE_FOLDER)
+	@cp log/log.h LICENSE README.md $(RELEASE_BUNDLE_FOLDER)
+	@cp -r $(LIBSDIR) $(RELEASE_BUNDLE_FOLDER)
+ifeq ($(SYSNAME),Windows)
+	tar -a -c -f $(RELEASE_BUNDLE_FOLDER).zip $(RELEASE_BUNDLE_FOLDER)
+else ifeq ($(SYSNAME),macOS)
+	hdiutil create -volname $(RELEASE_BUNDLE_FOLDER) \
+	-srcfolder $(RELEASE_BUNDLE_FOLDER) -ov -format UDZO $(RELEASE_BUNDLE_FOLDER).dmg
+else
+	tar -czf $(RELEASE_BUNDLE_FOLDER).tar.gz $(RELEASE_BUNDLE_FOLDER)/
+endif
+
 cleanwin:
 ifeq ($(OS),Windows_NT)
 	$(RM) -r *.dll
@@ -153,4 +170,4 @@ cleantest: cleanwin
 	$(RM) -r $(OBJSDIR)/release/test $(OBJSDIR)/debug/test $(TARGET) $(LOGSDIR)
 
 clean: cleanwin
-	$(RM) -r $(OBJSDIR) $(TARGET) $(LIBSDIR) $(LOGSDIR)
+	$(RM) -r $(OBJSDIR) $(TARGET) $(LIBSDIR) $(LOGSDIR) $(RELEASE_BUNDLE_FOLDER)*
