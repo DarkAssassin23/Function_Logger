@@ -1,6 +1,10 @@
 #ifndef LOG_H
 #define LOG_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <stdlib.h>
 #include <stdbool.h>
 #define RESET 0
@@ -59,4 +63,7 @@ void log_cleanup(void);
 #define NLOGF(...) log_func(DEFAULT, __FILE__, __LINE__, __func__, true, true, __VA_ARGS__)
 #define NLOGFL(level, ...) log_func(level, __FILE__, __LINE__, __func__, true, true, __VA_ARGS__)
 
+#ifdef __cplusplus
+} // extern "C"
+#endif
 #endif
